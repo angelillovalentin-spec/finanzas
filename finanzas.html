@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Finanzas">
+<title>Finanzas</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f5f7;color:#1d1d1f;min-height:100vh;padding-bottom:env(safe-area-inset-bottom)}
+.app{padding:16px;max-width:480px;margin:0 auto}
+.header{text-align:center;padding:16px 0 8px;font-size:20px;font-weight:600;letter-spacing:-0.3px}
+.tab-bar{display:flex;gap:3px;margin-bottom:20px;background:#e8e8ed;padding:4px;border-radius:12px}
+.tab{flex:1;padding:7px 2px;border:none;background:transparent;cursor:pointer;font-size:11px;color:#8e8e93;border-radius:9px;font-family:inherit;font-weight:500}
+.tab.active{background:#fff;color:#1d1d1f;font-weight:600;box-shadow:0 1px 3px rgba(0,0,0,0.12)}
+.section{display:none}
+.section.active{display:block}
+.card{background:#fff;border-radius:14px;padding:16px 18px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,0.08)}
+.card-title{font-size:13px;color:#8e8e93;margin-bottom:4px;font-weight:500}
+.card-amount{font-size:28px;font-weight:700;letter-spacing:-0.5px}
+.card-sub{font-size:12px;color:#8e8e93;margin-top:4px}
+.progress-bar{height:6px;background:#e8e8ed;border-radius:3px;margin-top:10px;overflow:hidden}
+.progress-fill{height:100%;border-radius:3px;transition:width 0.4s ease}
+.row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:0.5px solid #e8e8ed;font-size:14px}
+.row:last-child{border-bottom:none}
+.row-label{color:#8e8e93;font-size:12px;margin-top:2px}
+.badge{font-size:11px;padding:3px 8px;border-radius:8px;font-weight:600}
+.badge-green{background:#d1f5e0;color:#1a7f4b}
+.badge-amber{background:#fff0d4;color:#b35900}
+.badge-blue{background:#dceffe;color:#0a5fa3}
+.badge-gray{background:#e8e8ed;color:#6e6e73}
+label{font-size:13px;color:#8e8e93;display:block;margin-bottom:6px;margin-top:14px;font-weight:500}
+input,select{width:100%;font-size:16px;padding:10px 12px;border:1px solid #e8e8ed;border-radius:10px;background:#f5f5f7;color:#1d1d1f;font-family:inherit;outline:none;-webkit-appearance:none;appearance:none}
+input:focus,select:focus{border-color:#007aff;background:#fff}
+.btn{width:100%;margin-top:18px;padding:13px;font-size:16px;font-weight:600;background:#007aff;color:#fff;border:none;border-radius:12px;cursor:pointer;font-family:inherit}
+.btn:active{opacity:0.85}
+.btn-danger{background:#ff3b30}
+.section-title{font-size:18px;font-weight:700;margin-bottom:16px;letter-spacing:-0.3px}
+.month-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:4px}
+.month-card{background:#f5f5f7;border-radius:10px;padding:8px;text-align:center}
+.month-card.activo{border:1.5px solid #007aff;background:#f0f7ff}
+.m-name{font-size:11px;color:#8e8e93;font-weight:500}
+.m-amount{font-size:13px;font-weight:700;margin-top:2px}
+.m-cuota{font-size:10px;color:#8e8e93;margin-top:1px}
+.empty{text-align:center;color:#c7c7cc;font-size:14px;padding:32px 0}
+.delete-btn{background:none;border:none;cursor:pointer;color:#ff3b30;font-size:20px;padding:0 4px;line-height:1}
+.mov-total-row{display:flex;justify-content:space-between;align-items:center;padding:12px 0 0;margin-top:4px;border-top:1px solid #e8e8ed}
+.pill-bar{display:flex;gap:6px;margin-bottom:14px;overflow-x:auto;padding-bottom:2px;-webkit-overflow-scrolling:touch}
+.pill-bar::-webkit-scrollbar{display:none}
+.pill{padding:7px 14px;border:1px solid #e8e8ed;border-radius:20px;cursor:pointer;font-size:13px;white-space:nowrap;background:#fff;color:#8e8e93;font-family:inherit;font-weight:500}
+.pill.active{background:#007aff;color:#fff;border-color:#007aff}
+.mes-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;background:#fff;border-radius:12px;padding:10px 16px;box-shadow:0 1px 3px rgba(0,0,0,0.08)}
+.mes-nav button{background:none;border:none;cursor:pointer;font-size:20px;color:#007aff;padding:0 4px}
+.mes-nav span{font-size:15px;font-weight:600}
+.mov-tag{font-size:10px;padding:2px 6px;border-radius:6px;background:#e8e8ed;color:#6e6e73;margin-left:4px;font-weight:500;vertical-align:middle}
+.tarjeta-chip{display:inline-block;font-size:11px;padding:2px 8px;border-radius:6px;font-weight:600;margin-top:2px}
+.chip-debito{background:#dceffe;color:#0a5fa3}
+.chip-vcredito{background:#d1f5e0;color:#1a7f4b}
+.chip-master{background:#ffe5d4;color:#9a2e00}
+.divider-label{font-size:12px;font-weight:600;color:#8e8e93;margin:14px 0 6px;padding-left:2px;text-transform:uppercase;letter-spacing:0.5px}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="header">Mis Finanzas</div>
+  <div class="tab-bar">
+    <button class="tab active" onclick="showTab('gastos',this)">+ Gasto</button>
+    <button class="tab" onclick="showTab('movimientos',this)">Movim.</button>
+    <button class="tab" onclick="showTab('dashboard',this)">Dashboard</button>
+    <button class="tab" onclick="showTab('cuotas',this)">Cuotas</button>
+    <button class="tab" onclick="showTab('fijos',this)">Fijos</button>
+  </div>
+
+  <div id="gastos" class="section active">
+    <div class="section-title">Registrar gasto</div>
+    <div class="card">
+      <label>Tarjeta</label>
+      <select id="g-tarjeta">
+        <option value="visa_debito">Visa Débito</option>
+        <option value="visa_credito">Visa Crédito</option>
+        <option value="master_credito">Mastercard Crédito</option>
+      </select>
+      <label>Concepto</label>
+      <input type="text" id="g-concepto" placeholder="Ej: Supermercado">
+      <label>Monto ($)</label>
+      <input type="number" id="g-monto" placeholder="0" inputmode="numeric">
+      <label>Fecha</label>
+      <input type="date" id="g-fecha">
+      <button class="btn" onclick="agregarGasto()">Registrar gasto</button>
+    </div>
+  </div>
+
+  <div id="movimientos" class="section">
+    <div class="mes-nav">
+      <button onclick="cambiarMes(-1)">&#8592;</button>
+      <span id="mes-label"></span>
+      <button onclick="cambiarMes(1)">&#8594;</button>
+    </div>
+    <div class="pill-bar">
+      <button class="pill active" onclick="selectTarjeta('todas',this)">Todas</button>
+      <button class="pill" onclick="selectTarjeta('visa_debito',this)">Visa Débito</button>
+      <button class="pill" onclick="selectTarjeta('visa_credito',this)">Visa Crédito</button>
+      <button class="pill" onclick="selectTarjeta('master_credito',this)">Mastercard</button>
+    </div>
+    <div id="movimientos-list"></div>
+  </div>
+
+  <div id="dashboard" class="section"></div>
+
+  <div id="cuotas" class="section">
+    <div class="section-title">Cuotas</div>
+    <div class="card">
+      <label>Tarjeta</label>
+      <select id="c-tarjeta">
+        <option value="visa_credito">Visa Crédito</option>
+        <option value="master_credito">Mastercard Crédito</option>
+      </select>
+      <label>Concepto</label>
+      <input type="text" id="c-concepto" placeholder="Ej: Zapatillas">
+      <label>Monto total ($)</label>
+      <input type="number" id="c-monto" placeholder="0" inputmode="numeric">
+      <label>Cantidad de cuotas</label>
+      <input type="number" id="c-cuotas" placeholder="6" min="2" max="48" inputmode="numeric">
+      <label>Mes de inicio</label>
+      <input type="month" id="c-inicio">
+      <button class="btn" onclick="agregarCuota()">Agregar cuota</button>
+    </div>
+    <div id="cuotas-list"></div>
+  </div>
+
+  <div id="fijos" class="section">
+    <div class="section-title">Gastos fijos</div>
+    <div class="card">
+      <label>Tarjeta</label>
+      <select id="f-tarjeta">
+        <option value="visa_debito">Visa Débito</option>
+        <option value="visa_credito">Visa Crédito</option>
+        <option value="master_credito">Mastercard Crédito</option>
+      </select>
+      <label>Concepto</label>
+      <input type="text" id="f-concepto" placeholder="Ej: Netflix, Gimnasio">
+      <label>Monto mensual ($)</label>
+      <input type="number" id="f-monto" placeholder="0" inputmode="numeric">
+      <button class="btn" onclick="agregarFijo()">Agregar</button>
+    </div>
+    <div id="fijos-list"></div>
+  </div>
+</div>
+
+<script>
+const TARJETAS={
+  visa_debito:{nombre:'Visa Débito',ppto:300000,cierre:null,chip:'chip-debito'},
+  visa_credito:{nombre:'Visa Crédito',ppto:300000,cierre:30,chip:'chip-vcredito'},
+  master_credito:{nombre:'Mastercard Crédito',ppto:400000,cierre:30,chip:'chip-master'}
+};
+const MESES=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+const MESES_C=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+let mesOffset=0;
+let movTarjeta='todas';
+
+function getData(){try{return JSON.parse(localStorage.getItem('finanzas_v1')||'{}')}catch(e){return{}}}
+function saveData(d){try{localStorage.setItem('finanzas_v1',JSON.stringify(d))}catch(e){}}
+function initData(){let d=getData();if(!d.gastos)d.gastos=[];if(!d.fijos)d.fijos=[];if(!d.cuotas)d.cuotas=[];return d}
+function fmt(n){return '$'+Math.round(n).toLocaleString('es-AR')}
+function fmtF(f){return new Date(f+'T12:00:00').toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'numeric'})}
+
+function getMes(){const h=new Date();return new Date(h.getFullYear(),h.getMonth()+mesOffset,1)}
+function getMesStr(){return getMes().toISOString().slice(0,7)}
+function getMesLabel(){const m=getMes();const h=new Date();const es=m.getFullYear()===h.getFullYear()&&m.getMonth()===h.getMonth();return MESES[m.getMonth()]+' '+m.getFullYear()+(es?' ·  actual':'')}
+
+function getPeriodo(tid){
+  const t=TARJETAS[tid];const m=getMes();const y=m.getFullYear();const mo=m.getMonth();
+  if(!t.cierre)return{desde:new Date(y,mo,1),hasta:new Date(y,mo+1,0)};
+  return{desde:new Date(y,mo,1),hasta:new Date(y,mo,t.cierre)};
+}
+
+function getCuotasMeses(c){
+  const meses=[];const ini=new Date(c.inicio+'-01');
+  for(let i=0;i<Number(c.cuotas);i++){const m=new Date(ini.getFullYear(),ini.getMonth()+i,1);meses.push(m.toISOString().slice(0,7));}
+  return meses;
+}
+
+function getGastado(tid,d){
+  const p=getPeriodo(tid);const ms=getMesStr();let t=0;
+  (d.gastos||[]).forEach(g=>{if(g.tarjeta!==tid)return;const f=new Date(g.fecha+'T12:00:00');if(f>=p.desde&&f<=p.hasta)t+=Number(g.monto);});
+  (d.fijos||[]).forEach(f=>{if(f.tarjeta===tid)t+=Number(f.monto);});
+  (d.cuotas||[]).forEach(c=>{if(c.tarjeta!==tid)return;if(getCuotasMeses(c).includes(ms))t+=Number(c.monto)/Number(c.cuotas);});
+  return t;
+}
+
+function renderDashboard(){
+  const d=initData();const m=getMes();
+  let h=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px"><div class="section-title" style="margin:0">Dashboard</div><span style="font-size:13px;color:#8e8e93">${MESES[m.getMonth()]} ${m.getFullYear()}</span></div>`;
+  Object.entries(TARJETAS).forEach(([tid,t])=>{
+    const g=getGastado(tid,d);const r=t.ppto-g;const pct=Math.min(100,Math.round(g/t.ppto*100));
+    const fc=pct>90?'#ff3b30':pct>70?'#ff9500':'#34c759';
+    const tc=pct>90?'#ff3b30':pct>70?'#ff9500':'#34c759';
+    h+=`<div class="card">
+      <div class="card-title">${t.nombre}</div>
+      <div class="card-amount" style="color:${tc}">${fmt(r)}</div>
+      <div class="card-sub">Gastado ${fmt(g)} de ${fmt(t.ppto)} · ${pct}%</div>
+      <div class="progress-bar"><div class="progress-fill" style="width:${pct}%;background:${fc}"></div></div>
+      <div class="card-sub" style="margin-top:8px">${t.cierre?'Cierre: día '+t.cierre+' de cada mes':'Sin fecha de cierre'}</div>
+    </div>`;
+  });
+  document.getElementById('dashboard').innerHTML=h;
+}
+
+function cambiarMes(dir){
+  mesOffset+=dir;
+  document.getElementById('mes-label').textContent=getMesLabel();
+  renderMovimientos();
+}
+
+function selectTarjeta(tid,el){
+  movTarjeta=tid;
+  document.querySelectorAll('.pill').forEach(p=>p.classList.remove('active'));
+  el.classList.add('active');
+  renderMovimientos();
+}
+
+function renderMovimientos(){
+  const d=initData();const ms=getMesStr();
+  const tids=movTarjeta==='todas'?Object.keys(TARJETAS):[movTarjeta];
+  let h='';
+  tids.forEach(tid=>{
+    const t=TARJETAS[tid];const p=getPeriodo(tid);const items=[];
+    (d.gastos||[]).filter(g=>g.tarjeta===tid).forEach(g=>{
+      const f=new Date(g.fecha+'T12:00:00');
+      if(f>=p.desde&&f<=p.hasta)items.push({fecha:g.fecha,concepto:g.concepto,monto:Number(g.monto),tipo:'gasto'});
+    });
+    (d.fijos||[]).filter(f=>f.tarjeta===tid).forEach(f=>{items.push({fecha:p.desde.toISOString().slice(0,10),concepto:f.concepto,monto:Number(f.monto),tipo:'fijo'});});
+    (d.cuotas||[]).filter(c=>c.tarjeta===tid).forEach(c=>{
+      const mm=getCuotasMeses(c);const idx=mm.indexOf(ms);
+      if(idx>=0)items.push({fecha:p.desde.toISOString().slice(0,10),concepto:c.concepto,monto:Math.round(Number(c.monto)/Number(c.cuotas)),tipo:'cuota',cl:`${idx+1}/${c.cuotas}`});
+    });
+    items.sort((a,b)=>new Date(b.fecha)-new Date(a.fecha));
+    const total=items.reduce((s,i)=>s+i.monto,0);
+    if(movTarjeta==='todas')h+=`<div class="divider-label">${t.nombre}</div>`;
+    if(!items.length){h+=`<div class="card"><div class="empty" style="padding:12px 0">Sin movimientos</div></div>`;}
+    else{
+      h+=`<div class="card">`;
+      items.forEach(item=>{
+        const tag=item.tipo==='fijo'?'fijo':item.tipo==='cuota'?`cuota ${item.cl}`:'';
+        h+=`<div class="row">
+          <div style="flex:1;min-width:0;padding-right:10px">
+            <div style="font-size:15px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${item.concepto}${tag?`<span class="mov-tag">${tag}</span>`:''}</div>
+            <div class="row-label">${fmtF(item.fecha)}</div>
+          </div>
+          <div style="font-weight:700;white-space:nowrap;font-size:15px">${fmt(item.monto)}</div>
+        </div>`;
+      });
+      h+=`<div class="mov-total-row"><span style="font-size:13px;color:#8e8e93;font-weight:500">Total período</span><span style="font-weight:700;font-size:16px">${fmt(total)}</span></div></div>`;
+    }
+  });
+  document.getElementById('movimientos-list').innerHTML=h||'<div class="empty">Sin movimientos</div>';
+}
+
+function renderFijos(){
+  const d=initData();let h='';
+  if(!d.fijos.length){h='<div class="empty">Sin gastos fijos cargados</div>';}
+  else{
+    h='<div class="card">';
+    d.fijos.forEach((f,i)=>{
+      h+=`<div class="row">
+        <div><div style="font-size:15px;font-weight:500">${f.concepto}</div><div class="row-label">${TARJETAS[f.tarjeta]?.nombre}</div></div>
+        <div style="display:flex;align-items:center;gap:10px"><span style="font-weight:700">${fmt(f.monto)}</span><button class="delete-btn" onclick="eliminarFijo(${i})">×</button></div>
+      </div>`;
+    });
+    h+='</div>';
+  }
+  document.getElementById('fijos-list').innerHTML=h;
+}
+
+function renderCuotas(){
+  const d=initData();const ma=new Date().toISOString().slice(0,7);let h='';
+  if(!d.cuotas.length){h='<div class="empty">Sin cuotas cargadas</div>';}
+  else{
+    d.cuotas.forEach((c,i)=>{
+      const vc=Math.round(Number(c.monto)/Number(c.cuotas));
+      const mm=getCuotasMeses(c);const ca=mm.indexOf(ma)+1;
+      let grid='<div class="month-grid">';
+      mm.forEach((m,idx)=>{
+        const [y,mo]=m.split('-');const esA=m===ma;const esP=m<ma;
+        grid+=`<div class="month-card${esA?' activo':''}">
+          <div class="m-name">${MESES_C[parseInt(mo)-1]} ${y.slice(2)}</div>
+          <div class="m-amount" style="color:${esA?'#007aff':esP?'#c7c7cc':'#1d1d1f'}">${fmt(vc)}</div>
+          <div class="m-cuota">${idx+1}/${c.cuotas}</div>
+        </div>`;
+      });
+      grid+='</div>';
+      h+=`<div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:10px">
+          <div><div style="font-size:16px;font-weight:700">${c.concepto}</div>
+          <div class="row-label" style="margin-top:2px">${TARJETAS[c.tarjeta]?.nombre} · ${fmt(c.monto)} total</div></div>
+          <button class="delete-btn" onclick="eliminarCuota(${i})">×</button>
+        </div>
+        <div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap">
+          <span class="badge badge-green">${fmt(vc)}/mes</span>
+          ${ca>0?`<span class="badge badge-amber">Cuota ${ca} de ${c.cuotas}</span>`:`<span class="badge badge-blue">Inicia ${MESES_C[parseInt(mm[0].split('-')[1])-1]}</span>`}
+        </div>
+        ${grid}
+      </div>`;
+    });
+  }
+  document.getElementById('cuotas-list').innerHTML=h;
+}
+
+function agregarGasto(){
+  const tarjeta=document.getElementById('g-tarjeta').value;
+  const concepto=document.getElementById('g-concepto').value.trim();
+  const monto=document.getElementById('g-monto').value;
+  const fecha=document.getElementById('g-fecha').value;
+  if(!concepto||!monto||!fecha){alert('Completá todos los campos');return;}
+  const d=initData();d.gastos.push({tarjeta,concepto,monto:Number(monto),fecha});saveData(d);
+  document.getElementById('g-concepto').value='';document.getElementById('g-monto').value='';
+  alert('✓ Gasto registrado');
+}
+
+function agregarFijo(){
+  const tarjeta=document.getElementById('f-tarjeta').value;
+  const concepto=document.getElementById('f-concepto').value.trim();
+  const monto=document.getElementById('f-monto').value;
+  if(!concepto||!monto){alert('Completá todos los campos');return;}
+  const d=initData();d.fijos.push({tarjeta,concepto,monto:Number(monto)});saveData(d);
+  document.getElementById('f-concepto').value='';document.getElementById('f-monto').value='';
+  renderFijos();alert('✓ Gasto fijo agregado');
+}
+
+function agregarCuota(){
+  const tarjeta=document.getElementById('c-tarjeta').value;
+  const concepto=document.getElementById('c-concepto').value.trim();
+  const monto=document.getElementById('c-monto').value;
+  const cuotas=document.getElementById('c-cuotas').value;
+  const inicio=document.getElementById('c-inicio').value;
+  if(!concepto||!monto||!cuotas||!inicio){alert('Completá todos los campos');return;}
+  const d=initData();d.cuotas.push({tarjeta,concepto,monto:Number(monto),cuotas:Number(cuotas),inicio});saveData(d);
+  document.getElementById('c-concepto').value='';document.getElementById('c-monto').value='';document.getElementById('c-cuotas').value='';
+  renderCuotas();alert('✓ Cuota agregada');
+}
+
+function eliminarFijo(i){if(!confirm('¿Eliminar este gasto fijo?'))return;const d=initData();d.fijos.splice(i,1);saveData(d);renderFijos();}
+function eliminarCuota(i){if(!confirm('¿Eliminar esta cuota?'))return;const d=initData();d.cuotas.splice(i,1);saveData(d);renderCuotas();}
+
+function showTab(tab,el){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById(tab).classList.add('active');el.classList.add('active');
+  if(tab==='dashboard')renderDashboard();
+  if(tab==='movimientos')renderMovimientos();
+  if(tab==='fijos')renderFijos();
+  if(tab==='cuotas')renderCuotas();
+}
+
+document.getElementById('g-fecha').value=new Date().toISOString().slice(0,10);
+document.getElementById('c-inicio').value=new Date().toISOString().slice(0,7);
+document.getElementById('mes-label').textContent=getMesLabel();
+</script>
+</body>
+</html>
