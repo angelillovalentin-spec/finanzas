@@ -30,13 +30,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .badge-green{background:#d1f5e0;color:#1a7f4b}
 .badge-amber{background:#fff0d4;color:#b35900}
 .badge-blue{background:#dceffe;color:#0a5fa3}
-.badge-gray{background:#e8e8ed;color:#6e6e73}
 label{font-size:13px;color:#8e8e93;display:block;margin-bottom:6px;margin-top:14px;font-weight:500}
 input,select{width:100%;font-size:16px;padding:10px 12px;border:1px solid #e8e8ed;border-radius:10px;background:#f5f5f7;color:#1d1d1f;font-family:inherit;outline:none;-webkit-appearance:none;appearance:none}
 input:focus,select:focus{border-color:#007aff;background:#fff}
 .btn{width:100%;margin-top:18px;padding:13px;font-size:16px;font-weight:600;background:#007aff;color:#fff;border:none;border-radius:12px;cursor:pointer;font-family:inherit}
 .btn:active{opacity:0.85}
-.btn-danger{background:#ff3b30}
 .section-title{font-size:18px;font-weight:700;margin-bottom:16px;letter-spacing:-0.3px}
 .month-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:4px}
 .month-card{background:#f5f5f7;border-radius:10px;padding:8px;text-align:center}
@@ -55,11 +53,18 @@ input:focus,select:focus{border-color:#007aff;background:#fff}
 .mes-nav button{background:none;border:none;cursor:pointer;font-size:20px;color:#007aff;padding:0 4px}
 .mes-nav span{font-size:15px;font-weight:600}
 .mov-tag{font-size:10px;padding:2px 6px;border-radius:6px;background:#e8e8ed;color:#6e6e73;margin-left:4px;font-weight:500;vertical-align:middle}
-.tarjeta-chip{display:inline-block;font-size:11px;padding:2px 8px;border-radius:6px;font-weight:600;margin-top:2px}
-.chip-debito{background:#dceffe;color:#0a5fa3}
-.chip-vcredito{background:#d1f5e0;color:#1a7f4b}
-.chip-master{background:#ffe5d4;color:#9a2e00}
 .divider-label{font-size:12px;font-weight:600;color:#8e8e93;margin:14px 0 6px;padding-left:2px;text-transform:uppercase;letter-spacing:0.5px}
+.total-card{background:#1d1d1f;border-radius:14px;padding:16px 18px;margin-bottom:12px;margin-top:4px}
+.total-card .card-title{color:#8e8e93}
+.total-card .card-amount{color:#fff}
+.total-card .card-sub{color:#8e8e93}
+.total-card .progress-bar{background:#3a3a3c}
+.config-row{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:0.5px solid #e8e8ed}
+.config-row:last-child{border-bottom:none}
+.config-input{width:120px;font-size:15px;padding:6px 10px;border:1px solid #e8e8ed;border-radius:8px;background:#f5f5f7;color:#1d1d1f;font-family:inherit;outline:none;text-align:right}
+.config-input:focus{border-color:#007aff;background:#fff}
+.config-label{font-size:15px;font-weight:500}
+.config-sub{font-size:12px;color:#8e8e93;margin-top:2px}
 </style>
 </head>
 <body>
@@ -71,6 +76,7 @@ input:focus,select:focus{border-color:#007aff;background:#fff}
     <button class="tab" onclick="showTab('dashboard',this)">Dashboard</button>
     <button class="tab" onclick="showTab('cuotas',this)">Cuotas</button>
     <button class="tab" onclick="showTab('fijos',this)">Fijos</button>
+    <button class="tab" onclick="showTab('config',this)">Config</button>
   </div>
 
   <div id="gastos" class="section active">
@@ -147,13 +153,44 @@ input:focus,select:focus{border-color:#007aff;background:#fff}
     </div>
     <div id="fijos-list"></div>
   </div>
+
+  <div id="config" class="section">
+    <div class="section-title">Configuración</div>
+    <div class="card">
+      <div style="font-size:14px;font-weight:600;margin-bottom:12px;color:#8e8e93;text-transform:uppercase;letter-spacing:0.5px;font-size:12px">Presupuestos mensuales</div>
+      <div class="config-row">
+        <div><div class="config-label">Visa Débito</div><div class="config-sub">Sin fecha de cierre</div></div>
+        <input class="config-input" type="number" id="ppto-visa_debito" inputmode="numeric" placeholder="0">
+      </div>
+      <div class="config-row">
+        <div><div class="config-label">Visa Crédito</div><div class="config-sub" id="sub-visa_credito"></div></div>
+        <input class="config-input" type="number" id="ppto-visa_credito" inputmode="numeric" placeholder="0">
+      </div>
+      <div class="config-row">
+        <div><div class="config-label">Mastercard Crédito</div><div class="config-sub" id="sub-master_credito"></div></div>
+        <input class="config-input" type="number" id="ppto-master_credito" inputmode="numeric" placeholder="0">
+      </div>
+    </div>
+    <div class="card">
+      <div style="font-size:12px;font-weight:600;margin-bottom:12px;color:#8e8e93;text-transform:uppercase;letter-spacing:0.5px">Fechas de cierre (día del mes)</div>
+      <div class="config-row">
+        <div><div class="config-label">Visa Crédito</div></div>
+        <input class="config-input" type="number" id="cierre-visa_credito" inputmode="numeric" placeholder="Ej: 30" min="1" max="31">
+      </div>
+      <div class="config-row">
+        <div><div class="config-label">Mastercard Crédito</div></div>
+        <input class="config-input" type="number" id="cierre-master_credito" inputmode="numeric" placeholder="Ej: 30" min="1" max="31">
+      </div>
+    </div>
+    <button class="btn" onclick="guardarConfig()">Guardar cambios</button>
+  </div>
 </div>
 
 <script>
-const TARJETAS={
-  visa_debito:{nombre:'Visa Débito',ppto:300000,cierre:null,chip:'chip-debito'},
-  visa_credito:{nombre:'Visa Crédito',ppto:300000,cierre:30,chip:'chip-vcredito'},
-  master_credito:{nombre:'Mastercard Crédito',ppto:400000,cierre:30,chip:'chip-master'}
+const DEFAULTS={
+  visa_debito:{nombre:'Visa Débito',ppto:300000,cierre:null},
+  visa_credito:{nombre:'Visa Crédito',ppto:300000,cierre:30},
+  master_credito:{nombre:'Mastercard Crédito',ppto:400000,cierre:30}
 };
 const MESES=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 const MESES_C=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
@@ -162,49 +199,103 @@ let movTarjeta='todas';
 
 function getData(){try{return JSON.parse(localStorage.getItem('finanzas_v1')||'{}')}catch(e){return{}}}
 function saveData(d){try{localStorage.setItem('finanzas_v1',JSON.stringify(d))}catch(e){}}
-function initData(){let d=getData();if(!d.gastos)d.gastos=[];if(!d.fijos)d.fijos=[];if(!d.cuotas)d.cuotas=[];return d}
+function initData(){
+  let d=getData();
+  if(!d.gastos)d.gastos=[];
+  if(!d.fijos)d.fijos=[];
+  if(!d.cuotas)d.cuotas=[];
+  if(!d.config)d.config={
+    ppto:{visa_debito:300000,visa_credito:300000,master_credito:400000},
+    cierre:{visa_credito:30,master_credito:30}
+  };
+  return d;
+}
+
+function getTarjetas(){
+  const d=initData();
+  return{
+    visa_debito:{nombre:'Visa Débito',ppto:d.config.ppto.visa_debito||300000,cierre:null},
+    visa_credito:{nombre:'Visa Crédito',ppto:d.config.ppto.visa_credito||300000,cierre:d.config.cierre.visa_credito||30},
+    master_credito:{nombre:'Mastercard Crédito',ppto:d.config.ppto.master_credito||400000,cierre:d.config.cierre.master_credito||30}
+  };
+}
+
 function fmt(n){return '$'+Math.round(n).toLocaleString('es-AR')}
 function fmtF(f){return new Date(f+'T12:00:00').toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'numeric'})}
-
 function getMes(){const h=new Date();return new Date(h.getFullYear(),h.getMonth()+mesOffset,1)}
 function getMesStr(){return getMes().toISOString().slice(0,7)}
-function getMesLabel(){const m=getMes();const h=new Date();const es=m.getFullYear()===h.getFullYear()&&m.getMonth()===h.getMonth();return MESES[m.getMonth()]+' '+m.getFullYear()+(es?' ·  actual':'')}
+function getMesLabel(){const m=getMes();const h=new Date();const es=m.getFullYear()===h.getFullYear()&&m.getMonth()===h.getMonth();return MESES[m.getMonth()]+' '+m.getFullYear()+(es?' · actual':'')}
 
 function getPeriodo(tid){
-  const t=TARJETAS[tid];const m=getMes();const y=m.getFullYear();const mo=m.getMonth();
+  const t=getTarjetas()[tid];
+  const m=getMes();const y=m.getFullYear();const mo=m.getMonth();
   if(!t.cierre)return{desde:new Date(y,mo,1),hasta:new Date(y,mo+1,0)};
   return{desde:new Date(y,mo,1),hasta:new Date(y,mo,t.cierre)};
 }
 
 function getCuotasMeses(c){
   const meses=[];const ini=new Date(c.inicio+'-01');
-  for(let i=0;i<Number(c.cuotas);i++){const m=new Date(ini.getFullYear(),ini.getMonth()+i,1);meses.push(m.toISOString().slice(0,7));}
+  for(let i=0;i<Number(c.cuotas);i++){
+    const m=new Date(ini.getFullYear(),ini.getMonth()+i,1);
+    meses.push(m.toISOString().slice(0,7));
+  }
   return meses;
 }
 
+function cuotaActivaEnMes(c,mesStr){
+  const T=getTarjetas()[c.tarjeta];
+  const meses=getCuotasMeses(c);
+  if(!meses.includes(mesStr))return false;
+  if(!T.cierre)return true;
+  const hoy=new Date();
+  const [y,mo]=mesStr.split('-').map(Number);
+  const fechaCierre=new Date(y,mo-1,T.cierre);
+  if(mesStr===new Date().toISOString().slice(0,7)){
+    return hoy>=fechaCierre;
+  }
+  return mesStr<new Date().toISOString().slice(0,7);
+}
+
 function getGastado(tid,d){
-  const p=getPeriodo(tid);const ms=getMesStr();let t=0;
-  (d.gastos||[]).forEach(g=>{if(g.tarjeta!==tid)return;const f=new Date(g.fecha+'T12:00:00');if(f>=p.desde&&f<=p.hasta)t+=Number(g.monto);});
-  (d.fijos||[]).forEach(f=>{if(f.tarjeta===tid)t+=Number(f.monto);});
-  (d.cuotas||[]).forEach(c=>{if(c.tarjeta!==tid)return;if(getCuotasMeses(c).includes(ms))t+=Number(c.monto)/Number(c.cuotas);});
-  return t;
+  const p=getPeriodo(tid);const ms=getMesStr();let total=0;
+  (d.gastos||[]).forEach(g=>{
+    if(g.tarjeta!==tid)return;
+    const f=new Date(g.fecha+'T12:00:00');
+    if(f>=p.desde&&f<=p.hasta)total+=Number(g.monto);
+  });
+  (d.fijos||[]).forEach(f=>{if(f.tarjeta===tid)total+=Number(f.monto);});
+  (d.cuotas||[]).forEach(c=>{
+    if(c.tarjeta!==tid)return;
+    if(cuotaActivaEnMes(c,ms))total+=Number(c.monto)/Number(c.cuotas);
+  });
+  return total;
 }
 
 function renderDashboard(){
-  const d=initData();const m=getMes();
+  const d=initData();const T=getTarjetas();const m=getMes();
   let h=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px"><div class="section-title" style="margin:0">Dashboard</div><span style="font-size:13px;color:#8e8e93">${MESES[m.getMonth()]} ${m.getFullYear()}</span></div>`;
-  Object.entries(TARJETAS).forEach(([tid,t])=>{
+  let totalPpto=0;let totalGastado=0;
+  Object.entries(T).forEach(([tid,t])=>{
     const g=getGastado(tid,d);const r=t.ppto-g;const pct=Math.min(100,Math.round(g/t.ppto*100));
     const fc=pct>90?'#ff3b30':pct>70?'#ff9500':'#34c759';
     const tc=pct>90?'#ff3b30':pct>70?'#ff9500':'#34c759';
+    totalPpto+=t.ppto;totalGastado+=g;
     h+=`<div class="card">
       <div class="card-title">${t.nombre}</div>
       <div class="card-amount" style="color:${tc}">${fmt(r)}</div>
       <div class="card-sub">Gastado ${fmt(g)} de ${fmt(t.ppto)} · ${pct}%</div>
       <div class="progress-bar"><div class="progress-fill" style="width:${pct}%;background:${fc}"></div></div>
-      <div class="card-sub" style="margin-top:8px">${t.cierre?'Cierre: día '+t.cierre+' de cada mes':'Sin fecha de cierre'}</div>
+      <div class="card-sub" style="margin-top:8px">${t.cierre?'Cierre: día '+t.cierre:'Sin fecha de cierre'}</div>
     </div>`;
   });
+  const totalPct=Math.min(100,Math.round(totalGastado/totalPpto*100));
+  const totalFc=totalPct>90?'#ff3b30':totalPct>70?'#ff9500':'#34c759';
+  h+=`<div class="total-card">
+    <div class="card-title">Total general</div>
+    <div class="card-amount">${fmt(totalPpto-totalGastado)}</div>
+    <div class="card-sub">Gastado ${fmt(totalGastado)} de ${fmt(totalPpto)} · ${totalPct}%</div>
+    <div class="progress-bar"><div class="progress-fill" style="width:${totalPct}%;background:${totalFc}"></div></div>
+  </div>`;
   document.getElementById('dashboard').innerHTML=h;
 }
 
@@ -223,18 +314,21 @@ function selectTarjeta(tid,el){
 
 function renderMovimientos(){
   const d=initData();const ms=getMesStr();
-  const tids=movTarjeta==='todas'?Object.keys(TARJETAS):[movTarjeta];
+  const T=getTarjetas();
+  const tids=movTarjeta==='todas'?Object.keys(T):[movTarjeta];
   let h='';
   tids.forEach(tid=>{
-    const t=TARJETAS[tid];const p=getPeriodo(tid);const items=[];
+    const t=T[tid];const p=getPeriodo(tid);const items=[];
     (d.gastos||[]).filter(g=>g.tarjeta===tid).forEach(g=>{
       const f=new Date(g.fecha+'T12:00:00');
       if(f>=p.desde&&f<=p.hasta)items.push({fecha:g.fecha,concepto:g.concepto,monto:Number(g.monto),tipo:'gasto'});
     });
-    (d.fijos||[]).filter(f=>f.tarjeta===tid).forEach(f=>{items.push({fecha:p.desde.toISOString().slice(0,10),concepto:f.concepto,monto:Number(f.monto),tipo:'fijo'});});
+    (d.fijos||[]).filter(f=>f.tarjeta===tid).forEach(f=>{
+      items.push({fecha:p.desde.toISOString().slice(0,10),concepto:f.concepto,monto:Number(f.monto),tipo:'fijo'});
+    });
     (d.cuotas||[]).filter(c=>c.tarjeta===tid).forEach(c=>{
       const mm=getCuotasMeses(c);const idx=mm.indexOf(ms);
-      if(idx>=0)items.push({fecha:p.desde.toISOString().slice(0,10),concepto:c.concepto,monto:Math.round(Number(c.monto)/Number(c.cuotas)),tipo:'cuota',cl:`${idx+1}/${c.cuotas}`});
+      if(idx>=0&&cuotaActivaEnMes(c,ms))items.push({fecha:p.desde.toISOString().slice(0,10),concepto:c.concepto,monto:Math.round(Number(c.monto)/Number(c.cuotas)),tipo:'cuota',cl:`${idx+1}/${c.cuotas}`});
     });
     items.sort((a,b)=>new Date(b.fecha)-new Date(a.fecha));
     const total=items.reduce((s,i)=>s+i.monto,0);
@@ -259,13 +353,13 @@ function renderMovimientos(){
 }
 
 function renderFijos(){
-  const d=initData();let h='';
+  const d=initData();const T=getTarjetas();let h='';
   if(!d.fijos.length){h='<div class="empty">Sin gastos fijos cargados</div>';}
   else{
     h='<div class="card">';
     d.fijos.forEach((f,i)=>{
       h+=`<div class="row">
-        <div><div style="font-size:15px;font-weight:500">${f.concepto}</div><div class="row-label">${TARJETAS[f.tarjeta]?.nombre}</div></div>
+        <div><div style="font-size:15px;font-weight:500">${f.concepto}</div><div class="row-label">${T[f.tarjeta]?.nombre}</div></div>
         <div style="display:flex;align-items:center;gap:10px"><span style="font-weight:700">${fmt(f.monto)}</span><button class="delete-btn" onclick="eliminarFijo(${i})">×</button></div>
       </div>`;
     });
@@ -275,15 +369,16 @@ function renderFijos(){
 }
 
 function renderCuotas(){
-  const d=initData();const ma=new Date().toISOString().slice(0,7);let h='';
+  const d=initData();const T=getTarjetas();const ma=new Date().toISOString().slice(0,7);let h='';
   if(!d.cuotas.length){h='<div class="empty">Sin cuotas cargadas</div>';}
   else{
     d.cuotas.forEach((c,i)=>{
       const vc=Math.round(Number(c.monto)/Number(c.cuotas));
-      const mm=getCuotasMeses(c);const ca=mm.indexOf(ma)+1;
+      const mm=getCuotasMeses(c);
+      const ca=mm.findIndex(m=>cuotaActivaEnMes(c,m)&&m<=ma)+1;
       let grid='<div class="month-grid">';
       mm.forEach((m,idx)=>{
-        const [y,mo]=m.split('-');const esA=m===ma;const esP=m<ma;
+        const [y,mo]=m.split('-');const esA=cuotaActivaEnMes(c,m)&&m===ma;const esP=m<ma&&cuotaActivaEnMes(c,m);
         grid+=`<div class="month-card${esA?' activo':''}">
           <div class="m-name">${MESES_C[parseInt(mo)-1]} ${y.slice(2)}</div>
           <div class="m-amount" style="color:${esA?'#007aff':esP?'#c7c7cc':'#1d1d1f'}">${fmt(vc)}</div>
@@ -291,21 +386,46 @@ function renderCuotas(){
         </div>`;
       });
       grid+='</div>';
+      const T2=T[c.tarjeta];
+      const proxMes=mm.find(m=>!cuotaActivaEnMes(c,m)&&m>=ma);
       h+=`<div class="card">
         <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:10px">
           <div><div style="font-size:16px;font-weight:700">${c.concepto}</div>
-          <div class="row-label" style="margin-top:2px">${TARJETAS[c.tarjeta]?.nombre} · ${fmt(c.monto)} total</div></div>
+          <div class="row-label" style="margin-top:2px">${T2?.nombre} · ${fmt(c.monto)} total</div></div>
           <button class="delete-btn" onclick="eliminarCuota(${i})">×</button>
         </div>
         <div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap">
           <span class="badge badge-green">${fmt(vc)}/mes</span>
-          ${ca>0?`<span class="badge badge-amber">Cuota ${ca} de ${c.cuotas}</span>`:`<span class="badge badge-blue">Inicia ${MESES_C[parseInt(mm[0].split('-')[1])-1]}</span>`}
+          ${ca>0?`<span class="badge badge-amber">Cuota ${ca} de ${c.cuotas} activa</span>`:`<span class="badge badge-blue">Próxima: ${proxMes?MESES_C[parseInt(proxMes.split('-')[1])-1]:'—'}</span>`}
         </div>
         ${grid}
       </div>`;
     });
   }
   document.getElementById('cuotas-list').innerHTML=h;
+}
+
+function renderConfig(){
+  const d=initData();const T=getTarjetas();
+  document.getElementById('ppto-visa_debito').value=T.visa_debito.ppto;
+  document.getElementById('ppto-visa_credito').value=T.visa_credito.ppto;
+  document.getElementById('ppto-master_credito').value=T.master_credito.ppto;
+  document.getElementById('cierre-visa_credito').value=T.visa_credito.cierre||'';
+  document.getElementById('cierre-master_credito').value=T.master_credito.cierre||'';
+  document.getElementById('sub-visa_credito').textContent=T.visa_credito.cierre?'Cierre día '+T.visa_credito.cierre:'Sin cierre';
+  document.getElementById('sub-master_credito').textContent=T.master_credito.cierre?'Cierre día '+T.master_credito.cierre:'Sin cierre';
+}
+
+function guardarConfig(){
+  const d=initData();
+  d.config.ppto.visa_debito=Number(document.getElementById('ppto-visa_debito').value)||300000;
+  d.config.ppto.visa_credito=Number(document.getElementById('ppto-visa_credito').value)||300000;
+  d.config.ppto.master_credito=Number(document.getElementById('ppto-master_credito').value)||400000;
+  d.config.cierre.visa_credito=Number(document.getElementById('cierre-visa_credito').value)||30;
+  d.config.cierre.master_credito=Number(document.getElementById('cierre-master_credito').value)||30;
+  saveData(d);
+  alert('✓ Configuración guardada');
+  renderConfig();
 }
 
 function agregarGasto(){
@@ -352,6 +472,7 @@ function showTab(tab,el){
   if(tab==='movimientos')renderMovimientos();
   if(tab==='fijos')renderFijos();
   if(tab==='cuotas')renderCuotas();
+  if(tab==='config')renderConfig();
 }
 
 document.getElementById('g-fecha').value=new Date().toISOString().slice(0,10);
