@@ -65,6 +65,13 @@ input:focus,select:focus{border-color:#007aff;background:#fff}
 .config-input:focus{border-color:#007aff;background:#fff}
 .config-label{font-size:15px;font-weight:500}
 .config-sub{font-size:12px;color:#8e8e93;margin-top:2px}
+.usd-banner{background:#f0f7ff;border:1px solid #b5d4f4;border-radius:12px;padding:10px 14px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center}
+.usd-banner-label{font-size:13px;color:#0a5fa3;font-weight:500}
+.usd-banner-val{font-size:15px;font-weight:700;color:#0a5fa3}
+.moneda-toggle{display:flex;gap:8px;margin-top:14px}
+.moneda-btn{flex:1;padding:10px;border:1px solid #e8e8ed;border-radius:10px;background:#f5f5f7;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;color:#8e8e93}
+.moneda-btn.active{background:#007aff;color:#fff;border-color:#007aff}
+.usd-preview{font-size:13px;color:#8e8e93;margin-top:8px;min-height:18px}
 </style>
 </head>
 <body>
@@ -81,6 +88,10 @@ input:focus,select:focus{border-color:#007aff;background:#fff}
 
   <div id="gastos" class="section active">
     <div class="section-title">Registrar gasto</div>
+    <div id="usd-banner-gastos" class="usd-banner" style="display:none">
+      <span class="usd-banner-label">Dólar oficial</span>
+      <span class="usd-banner-val" id="cotiz-gastos">cargando...</span>
+    </div>
     <div class="card">
       <label>Tarjeta</label>
       <select id="g-tarjeta">
@@ -88,10 +99,16 @@ input:focus,select:focus{border-color:#007aff;background:#fff}
         <option value="visa_credito">Visa Crédito</option>
         <option value="master_credito">Mastercard Crédito</option>
       </select>
+      <label>Moneda</label>
+      <div class="moneda-toggle">
+        <button class="moneda-btn active" id="btn-ars" onclick="setMoneda('ARS')">$ Pesos</button>
+        <button class="moneda-btn" id="btn-usd" onclick="setMoneda('USD')">USD</button>
+      </div>
       <label>Concepto</label>
       <input type="text" id="g-concepto" placeholder="Ej: Supermercado">
-      <label>Monto ($)</label>
-      <input type="number" id="g-monto" placeholder="0" inputmode="numeric">
+      <label id="g-monto-label">Monto ($)</label>
+      <input type="number" id="g-monto" placeholder="0" inputmode="decimal" oninput="updateUsdPreview()">
+      <div class="usd-preview" id="usd-preview"></div>
       <label>Fecha</label>
       <input type="date" id="g-fecha">
       <button class="btn" onclick="agregarGasto()">Registrar gasto</button>
@@ -138,6 +155,10 @@ input:focus,select:focus{border-color:#007aff;background:#fff}
 
   <div id="fijos" class="section">
     <div class="section-title">Gastos fijos</div>
+    <div id="usd-banner-fijos" class="usd-banner" style="display:none">
+      <span class="usd-banner-label">Dólar oficial</span>
+      <span class="usd-banner-val" id="cotiz-fijos">cargando...</span>
+    </div>
     <div class="card">
       <label>Tarjeta</label>
       <select id="f-tarjeta">
@@ -145,10 +166,16 @@ input:focus,select:focus{border-color:#007aff;background:#fff}
         <option value="visa_credito">Visa Crédito</option>
         <option value="master_credito">Mastercard Crédito</option>
       </select>
+      <label>Moneda</label>
+      <div class="moneda-toggle">
+        <button class="moneda-btn active" id="btn-f-ars" onclick="setMonedaFijo('ARS')">$ Pesos</button>
+        <button class="moneda-btn" id="btn-f-usd" onclick="setMonedaFijo('USD')">USD</button>
+      </div>
       <label>Concepto</label>
-      <input type="text" id="f-concepto" placeholder="Ej: Netflix, Gimnasio">
-      <label>Monto mensual ($)</label>
-      <input type="number" id="f-monto" placeholder="0" inputmode="numeric">
+      <input type="text" id="f-concepto" placeholder="Ej: Netflix">
+      <label id="f-monto-label">Monto mensual ($)</label>
+      <input type="number" id="f-monto" placeholder="0" inputmode="decimal" oninput="updateUsdPreviewFijo()">
+      <div class="usd-preview" id="usd-preview-fijo"></div>
       <button class="btn" onclick="agregarFijo()">Agregar</button>
     </div>
     <div id="fijos-list"></div>
@@ -156,8 +183,12 @@ input:focus,select:focus{border-color:#007aff;background:#fff}
 
   <div id="config" class="section">
     <div class="section-title">Configuración</div>
+    <div id="usd-banner-config" class="usd-banner">
+      <span class="usd-banner-label">Dólar oficial ahora</span>
+      <span class="usd-banner-val" id="cotiz-config">cargando...</span>
+    </div>
     <div class="card">
-      <div style="font-size:14px;font-weight:600;margin-bottom:12px;color:#8e8e93;text-transform:uppercase;letter-spacing:0.5px;font-size:12px">Presupuestos mensuales</div>
+      <div style="font-size:12px;font-weight:600;margin-bottom:12px;color:#8e8e93;text-transform:uppercase;letter-spacing:0.5px">Presupuestos mensuales</div>
       <div class="config-row">
         <div><div class="config-label">Visa Débito</div><div class="config-sub">Sin fecha de cierre</div></div>
         <input class="config-input" type="number" id="ppto-visa_debito" inputmode="numeric" placeholder="0">
@@ -187,15 +218,74 @@ input:focus,select:focus{border-color:#007aff;background:#fff}
 </div>
 
 <script>
-const DEFAULTS={
-  visa_debito:{nombre:'Visa Débito',ppto:300000,cierre:null},
-  visa_credito:{nombre:'Visa Crédito',ppto:300000,cierre:30},
-  master_credito:{nombre:'Mastercard Crédito',ppto:400000,cierre:30}
-};
 const MESES=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 const MESES_C=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
 let mesOffset=0;
 let movTarjeta='todas';
+let monedaGasto='ARS';
+let monedaFijo='ARS';
+let cotizUSD=null;
+
+async function fetchCotizacion(){
+  if(cotizUSD)return cotizUSD;
+  try{
+    const r=await fetch('https://dolarapi.com/v1/dolares/oficial');
+    const j=await r.json();
+    cotizUSD=j.venta;
+    return cotizUSD;
+  }catch(e){
+    cotizUSD=null;return null;
+  }
+}
+
+async function mostrarCotizacion(){
+  const c=await fetchCotizacion();
+  const txt=c?'$'+Math.round(c).toLocaleString('es-AR')+' / USD':'No disponible';
+  ['cotiz-gastos','cotiz-fijos','cotiz-config'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el)el.textContent=txt;
+  });
+}
+
+function setMoneda(m){
+  monedaGasto=m;
+  document.getElementById('btn-ars').classList.toggle('active',m==='ARS');
+  document.getElementById('btn-usd').classList.toggle('active',m==='USD');
+  document.getElementById('g-monto-label').textContent=m==='USD'?'Monto (USD)':'Monto ($)';
+  document.getElementById('usd-banner-gastos').style.display=m==='USD'?'flex':'none';
+  document.getElementById('g-monto').placeholder=m==='USD'?'0.00':'0';
+  updateUsdPreview();
+}
+
+function setMonedaFijo(m){
+  monedaFijo=m;
+  document.getElementById('btn-f-ars').classList.toggle('active',m==='ARS');
+  document.getElementById('btn-f-usd').classList.toggle('active',m==='USD');
+  document.getElementById('f-monto-label').textContent=m==='USD'?'Monto mensual (USD)':'Monto mensual ($)';
+  document.getElementById('usd-banner-fijos').style.display=m==='USD'?'flex':'none';
+  document.getElementById('f-monto').placeholder=m==='USD'?'0.00':'0';
+  updateUsdPreviewFijo();
+}
+
+async function updateUsdPreview(){
+  const el=document.getElementById('usd-preview');
+  if(monedaGasto!=='USD'){el.textContent='';return;}
+  const v=parseFloat(document.getElementById('g-monto').value);
+  if(!v||isNaN(v)){el.textContent='';return;}
+  const c=await fetchCotizacion();
+  if(!c){el.textContent='Cotización no disponible';return;}
+  el.textContent='≈ $'+Math.round(v*c).toLocaleString('es-AR')+' pesos';
+}
+
+async function updateUsdPreviewFijo(){
+  const el=document.getElementById('usd-preview-fijo');
+  if(monedaFijo!=='USD'){el.textContent='';return;}
+  const v=parseFloat(document.getElementById('f-monto').value);
+  if(!v||isNaN(v)){el.textContent='';return;}
+  const c=await fetchCotizacion();
+  if(!c){el.textContent='Cotización no disponible';return;}
+  el.textContent='≈ $'+Math.round(v*c).toLocaleString('es-AR')+' pesos';
+}
 
 function getData(){try{return JSON.parse(localStorage.getItem('finanzas_v1')||'{}')}catch(e){return{}}}
 function saveData(d){try{localStorage.setItem('finanzas_v1',JSON.stringify(d))}catch(e){}}
@@ -204,10 +294,7 @@ function initData(){
   if(!d.gastos)d.gastos=[];
   if(!d.fijos)d.fijos=[];
   if(!d.cuotas)d.cuotas=[];
-  if(!d.config)d.config={
-    ppto:{visa_debito:300000,visa_credito:300000,master_credito:400000},
-    cierre:{visa_credito:30,master_credito:30}
-  };
+  if(!d.config)d.config={ppto:{visa_debito:300000,visa_credito:300000,master_credito:400000},cierre:{visa_credito:30,master_credito:30}};
   return d;
 }
 
@@ -227,32 +314,24 @@ function getMesStr(){return getMes().toISOString().slice(0,7)}
 function getMesLabel(){const m=getMes();const h=new Date();const es=m.getFullYear()===h.getFullYear()&&m.getMonth()===h.getMonth();return MESES[m.getMonth()]+' '+m.getFullYear()+(es?' · actual':'')}
 
 function getPeriodo(tid){
-  const t=getTarjetas()[tid];
-  const m=getMes();const y=m.getFullYear();const mo=m.getMonth();
+  const t=getTarjetas()[tid];const m=getMes();const y=m.getFullYear();const mo=m.getMonth();
   if(!t.cierre)return{desde:new Date(y,mo,1),hasta:new Date(y,mo+1,0)};
   return{desde:new Date(y,mo,1),hasta:new Date(y,mo,t.cierre)};
 }
 
 function getCuotasMeses(c){
   const meses=[];const ini=new Date(c.inicio+'-01');
-  for(let i=0;i<Number(c.cuotas);i++){
-    const m=new Date(ini.getFullYear(),ini.getMonth()+i,1);
-    meses.push(m.toISOString().slice(0,7));
-  }
+  for(let i=0;i<Number(c.cuotas);i++){const m=new Date(ini.getFullYear(),ini.getMonth()+i,1);meses.push(m.toISOString().slice(0,7));}
   return meses;
 }
 
 function cuotaActivaEnMes(c,mesStr){
-  const T=getTarjetas()[c.tarjeta];
-  const meses=getCuotasMeses(c);
+  const T=getTarjetas()[c.tarjeta];const meses=getCuotasMeses(c);
   if(!meses.includes(mesStr))return false;
   if(!T.cierre)return true;
-  const hoy=new Date();
-  const [y,mo]=mesStr.split('-').map(Number);
+  const hoy=new Date();const [y,mo]=mesStr.split('-').map(Number);
   const fechaCierre=new Date(y,mo-1,T.cierre);
-  if(mesStr===new Date().toISOString().slice(0,7)){
-    return hoy>=fechaCierre;
-  }
+  if(mesStr===new Date().toISOString().slice(0,7))return hoy>=fechaCierre;
   return mesStr<new Date().toISOString().slice(0,7);
 }
 
@@ -261,9 +340,9 @@ function getGastado(tid,d){
   (d.gastos||[]).forEach(g=>{
     if(g.tarjeta!==tid)return;
     const f=new Date(g.fecha+'T12:00:00');
-    if(f>=p.desde&&f<=p.hasta)total+=Number(g.monto);
+    if(f>=p.desde&&f<=p.hasta)total+=Number(g.montoARS||g.monto);
   });
-  (d.fijos||[]).forEach(f=>{if(f.tarjeta===tid)total+=Number(f.monto);});
+  (d.fijos||[]).forEach(f=>{if(f.tarjeta===tid)total+=Number(f.montoARS||f.monto);});
   (d.cuotas||[]).forEach(c=>{
     if(c.tarjeta!==tid)return;
     if(cuotaActivaEnMes(c,ms))total+=Number(c.monto)/Number(c.cuotas);
@@ -299,36 +378,36 @@ function renderDashboard(){
   document.getElementById('dashboard').innerHTML=h;
 }
 
-function cambiarMes(dir){
-  mesOffset+=dir;
-  document.getElementById('mes-label').textContent=getMesLabel();
-  renderMovimientos();
-}
+function cambiarMes(dir){mesOffset+=dir;document.getElementById('mes-label').textContent=getMesLabel();renderMovimientos();}
 
 function selectTarjeta(tid,el){
   movTarjeta=tid;
   document.querySelectorAll('.pill').forEach(p=>p.classList.remove('active'));
-  el.classList.add('active');
-  renderMovimientos();
+  el.classList.add('active');renderMovimientos();
 }
 
 function renderMovimientos(){
-  const d=initData();const ms=getMesStr();
-  const T=getTarjetas();
+  const d=initData();const ms=getMesStr();const T=getTarjetas();
   const tids=movTarjeta==='todas'?Object.keys(T):[movTarjeta];
   let h='';
   tids.forEach(tid=>{
     const t=T[tid];const p=getPeriodo(tid);const items=[];
     (d.gastos||[]).filter(g=>g.tarjeta===tid).forEach(g=>{
       const f=new Date(g.fecha+'T12:00:00');
-      if(f>=p.desde&&f<=p.hasta)items.push({fecha:g.fecha,concepto:g.concepto,monto:Number(g.monto),tipo:'gasto'});
+      if(f>=p.desde&&f<=p.hasta){
+        const monto=Number(g.montoARS||g.monto);
+        const sub=g.monedaOrigen==='USD'?`USD ${g.monto} · ${fmtF(g.fecha)}`:`${fmtF(g.fecha)}`;
+        items.push({fecha:g.fecha,concepto:g.concepto,monto,tipo:'gasto',sub});
+      }
     });
     (d.fijos||[]).filter(f=>f.tarjeta===tid).forEach(f=>{
-      items.push({fecha:p.desde.toISOString().slice(0,10),concepto:f.concepto,monto:Number(f.monto),tipo:'fijo'});
+      const monto=Number(f.montoARS||f.monto);
+      const sub=f.monedaOrigen==='USD'?`USD ${f.monto} · fijo`:'fijo';
+      items.push({fecha:p.desde.toISOString().slice(0,10),concepto:f.concepto,monto,tipo:'fijo',sub});
     });
     (d.cuotas||[]).filter(c=>c.tarjeta===tid).forEach(c=>{
       const mm=getCuotasMeses(c);const idx=mm.indexOf(ms);
-      if(idx>=0&&cuotaActivaEnMes(c,ms))items.push({fecha:p.desde.toISOString().slice(0,10),concepto:c.concepto,monto:Math.round(Number(c.monto)/Number(c.cuotas)),tipo:'cuota',cl:`${idx+1}/${c.cuotas}`});
+      if(idx>=0&&cuotaActivaEnMes(c,ms))items.push({fecha:p.desde.toISOString().slice(0,10),concepto:c.concepto,monto:Math.round(Number(c.monto)/Number(c.cuotas)),tipo:'cuota',cl:`${idx+1}/${c.cuotas}`,sub:`cuota ${idx+1}/${c.cuotas}`});
     });
     items.sort((a,b)=>new Date(b.fecha)-new Date(a.fecha));
     const total=items.reduce((s,i)=>s+i.monto,0);
@@ -337,11 +416,10 @@ function renderMovimientos(){
     else{
       h+=`<div class="card">`;
       items.forEach(item=>{
-        const tag=item.tipo==='fijo'?'fijo':item.tipo==='cuota'?`cuota ${item.cl}`:'';
         h+=`<div class="row">
           <div style="flex:1;min-width:0;padding-right:10px">
-            <div style="font-size:15px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${item.concepto}${tag?`<span class="mov-tag">${tag}</span>`:''}</div>
-            <div class="row-label">${fmtF(item.fecha)}</div>
+            <div style="font-size:15px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${item.concepto}</div>
+            <div class="row-label">${item.sub}<span class="mov-tag">${item.tipo==='gasto'?'':item.tipo==='fijo'?'fijo':item.tipo}</span></div>
           </div>
           <div style="font-weight:700;white-space:nowrap;font-size:15px">${fmt(item.monto)}</div>
         </div>`;
@@ -358,9 +436,11 @@ function renderFijos(){
   else{
     h='<div class="card">';
     d.fijos.forEach((f,i)=>{
+      const monto=Number(f.montoARS||f.monto);
+      const sub=f.monedaOrigen==='USD'?`USD ${f.monto}`:'';
       h+=`<div class="row">
-        <div><div style="font-size:15px;font-weight:500">${f.concepto}</div><div class="row-label">${T[f.tarjeta]?.nombre}</div></div>
-        <div style="display:flex;align-items:center;gap:10px"><span style="font-weight:700">${fmt(f.monto)}</span><button class="delete-btn" onclick="eliminarFijo(${i})">×</button></div>
+        <div><div style="font-size:15px;font-weight:500">${f.concepto}</div><div class="row-label">${T[f.tarjeta]?.nombre}${sub?' · '+sub:''}</div></div>
+        <div style="display:flex;align-items:center;gap:10px"><span style="font-weight:700">${fmt(monto)}</span><button class="delete-btn" onclick="eliminarFijo(${i})">×</button></div>
       </div>`;
     });
     h+='</div>';
@@ -375,7 +455,6 @@ function renderCuotas(){
     d.cuotas.forEach((c,i)=>{
       const vc=Math.round(Number(c.monto)/Number(c.cuotas));
       const mm=getCuotasMeses(c);
-      const ca=mm.findIndex(m=>cuotaActivaEnMes(c,m)&&m<=ma)+1;
       let grid='<div class="month-grid">';
       mm.forEach((m,idx)=>{
         const [y,mo]=m.split('-');const esA=cuotaActivaEnMes(c,m)&&m===ma;const esP=m<ma&&cuotaActivaEnMes(c,m);
@@ -386,12 +465,12 @@ function renderCuotas(){
         </div>`;
       });
       grid+='</div>';
-      const T2=T[c.tarjeta];
       const proxMes=mm.find(m=>!cuotaActivaEnMes(c,m)&&m>=ma);
+      const ca=mm.filter(m=>cuotaActivaEnMes(c,m)&&m<=ma).length;
       h+=`<div class="card">
         <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:10px">
           <div><div style="font-size:16px;font-weight:700">${c.concepto}</div>
-          <div class="row-label" style="margin-top:2px">${T2?.nombre} · ${fmt(c.monto)} total</div></div>
+          <div class="row-label" style="margin-top:2px">${T[c.tarjeta]?.nombre} · ${fmt(c.monto)} total</div></div>
           <button class="delete-btn" onclick="eliminarCuota(${i})">×</button>
         </div>
         <div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap">
@@ -414,6 +493,7 @@ function renderConfig(){
   document.getElementById('cierre-master_credito').value=T.master_credito.cierre||'';
   document.getElementById('sub-visa_credito').textContent=T.visa_credito.cierre?'Cierre día '+T.visa_credito.cierre:'Sin cierre';
   document.getElementById('sub-master_credito').textContent=T.master_credito.cierre?'Cierre día '+T.master_credito.cierre:'Sin cierre';
+  mostrarCotizacion();
 }
 
 function guardarConfig(){
@@ -423,29 +503,51 @@ function guardarConfig(){
   d.config.ppto.master_credito=Number(document.getElementById('ppto-master_credito').value)||400000;
   d.config.cierre.visa_credito=Number(document.getElementById('cierre-visa_credito').value)||30;
   d.config.cierre.master_credito=Number(document.getElementById('cierre-master_credito').value)||30;
-  saveData(d);
-  alert('✓ Configuración guardada');
-  renderConfig();
+  saveData(d);alert('✓ Configuración guardada');renderConfig();
 }
 
-function agregarGasto(){
+async function agregarGasto(){
   const tarjeta=document.getElementById('g-tarjeta').value;
   const concepto=document.getElementById('g-concepto').value.trim();
-  const monto=document.getElementById('g-monto').value;
+  const montoRaw=parseFloat(document.getElementById('g-monto').value);
   const fecha=document.getElementById('g-fecha').value;
-  if(!concepto||!monto||!fecha){alert('Completá todos los campos');return;}
-  const d=initData();d.gastos.push({tarjeta,concepto,monto:Number(monto),fecha});saveData(d);
-  document.getElementById('g-concepto').value='';document.getElementById('g-monto').value='';
+  if(!concepto||!montoRaw||!fecha){alert('Completá todos los campos');return;}
+  const d=initData();
+  let montoARS=montoRaw;
+  let monedaOrigen='ARS';
+  if(monedaGasto==='USD'){
+    const c=await fetchCotizacion();
+    if(!c){alert('No se pudo obtener la cotización. Intentá de nuevo.');return;}
+    montoARS=Math.round(montoRaw*c);
+    monedaOrigen='USD';
+  }
+  d.gastos.push({tarjeta,concepto,monto:montoRaw,montoARS,monedaOrigen,fecha});
+  saveData(d);
+  document.getElementById('g-concepto').value='';
+  document.getElementById('g-monto').value='';
+  document.getElementById('usd-preview').textContent='';
   alert('✓ Gasto registrado');
 }
 
-function agregarFijo(){
+async function agregarFijo(){
   const tarjeta=document.getElementById('f-tarjeta').value;
   const concepto=document.getElementById('f-concepto').value.trim();
-  const monto=document.getElementById('f-monto').value;
-  if(!concepto||!monto){alert('Completá todos los campos');return;}
-  const d=initData();d.fijos.push({tarjeta,concepto,monto:Number(monto)});saveData(d);
-  document.getElementById('f-concepto').value='';document.getElementById('f-monto').value='';
+  const montoRaw=parseFloat(document.getElementById('f-monto').value);
+  if(!concepto||!montoRaw){alert('Completá todos los campos');return;}
+  const d=initData();
+  let montoARS=montoRaw;
+  let monedaOrigen='ARS';
+  if(monedaFijo==='USD'){
+    const c=await fetchCotizacion();
+    if(!c){alert('No se pudo obtener la cotización. Intentá de nuevo.');return;}
+    montoARS=Math.round(montoRaw*c);
+    monedaOrigen='USD';
+  }
+  d.fijos.push({tarjeta,concepto,monto:montoRaw,montoARS,monedaOrigen});
+  saveData(d);
+  document.getElementById('f-concepto').value='';
+  document.getElementById('f-monto').value='';
+  document.getElementById('usd-preview-fijo').textContent='';
   renderFijos();alert('✓ Gasto fijo agregado');
 }
 
@@ -470,7 +572,7 @@ function showTab(tab,el){
   document.getElementById(tab).classList.add('active');el.classList.add('active');
   if(tab==='dashboard')renderDashboard();
   if(tab==='movimientos')renderMovimientos();
-  if(tab==='fijos')renderFijos();
+  if(tab==='fijos'){renderFijos();mostrarCotizacion();}
   if(tab==='cuotas')renderCuotas();
   if(tab==='config')renderConfig();
 }
@@ -478,6 +580,7 @@ function showTab(tab,el){
 document.getElementById('g-fecha').value=new Date().toISOString().slice(0,10);
 document.getElementById('c-inicio').value=new Date().toISOString().slice(0,7);
 document.getElementById('mes-label').textContent=getMesLabel();
+mostrarCotizacion();
 </script>
 </body>
 </html>
