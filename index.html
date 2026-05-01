@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html lang="es">
 <head>
 <meta charset="UTF-8">
@@ -127,7 +126,7 @@ input::placeholder{color:var(--text3)}
       <label>Concepto</label>
       <input type="text" id="g-concepto" placeholder="Ej: Supermercado, Netflix...">
       <label id="g-monto-lbl">Monto ($)</label>
-      <input type="text" id="g-monto" placeholder="0,00" inputmode="decimal" oninput="fmtInput(this);updatePreviewG()">
+      <input type="number" id="g-monto" placeholder="0" inputmode="decimal" oninput="updatePreviewG()">
       <div class="usd-preview" id="preview-g"></div>
       <label>Fecha</label>
       <input type="date" id="g-fecha">
@@ -166,7 +165,7 @@ input::placeholder{color:var(--text3)}
       <label>Concepto</label>
       <input type="text" id="c-concepto" placeholder="Ej: Zapatillas, TV...">
       <label>Monto total ($)</label>
-      <input type="text" id="c-monto" placeholder="0,00" inputmode="decimal" oninput="fmtInput(this)">
+      <input type="number" id="c-monto" placeholder="0" inputmode="decimal">
       <label>Cantidad de cuotas</label>
       <input type="number" id="c-cuotas" placeholder="6" min="2" max="48" inputmode="numeric">
       <label>Mes de inicio</label>
@@ -190,7 +189,7 @@ input::placeholder{color:var(--text3)}
       <label>Concepto</label>
       <input type="text" id="f-concepto" placeholder="Ej: Netflix, Spotify...">
       <label id="f-monto-lbl">Monto mensual ($)</label>
-      <input type="text" id="f-monto" placeholder="0,00" inputmode="decimal" oninput="fmtInput(this);updatePreviewF()">
+      <input type="number" id="f-monto" placeholder="0" inputmode="decimal" oninput="updatePreviewF()">
       <div class="usd-preview" id="preview-f"></div>
       <button class="btn" onclick="agregarFijo()">Agregar fijo</button>
     </div>
@@ -202,9 +201,9 @@ input::placeholder{color:var(--text3)}
     <div class="usd-banner" style="display:flex"><span class="usd-banner-label">USD oficial ahora</span><span class="usd-banner-val" id="cotiz-cfg">cargando...</span></div>
     <div class="card">
       <div style="font-size:11px;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:4px">Presupuestos mensuales</div>
-      <div class="config-row"><div><div class="config-label">Visa Débito</div><div class="config-sub">Sin cierre</div></div><input class="config-input" type="text" id="ppto-visa_debito" inputmode="decimal" oninput="fmtInput(this)"></div>
-      <div class="config-row"><div><div class="config-label">Visa Crédito</div><div class="config-sub" id="cfg-sub-vc"></div></div><input class="config-input" type="text" id="ppto-visa_credito" inputmode="decimal" oninput="fmtInput(this)"></div>
-      <div class="config-row"><div><div class="config-label">Mastercard</div><div class="config-sub" id="cfg-sub-mc"></div></div><input class="config-input" type="text" id="ppto-master_credito" inputmode="decimal" oninput="fmtInput(this)"></div>
+      <div class="config-row"><div><div class="config-label">Visa Débito</div><div class="config-sub">Sin cierre</div></div><input class="config-input" type="number" id="ppto-visa_debito" inputmode="numeric"></div>
+      <div class="config-row"><div><div class="config-label">Visa Crédito</div><div class="config-sub" id="cfg-sub-vc"></div></div><input class="config-input" type="number" id="ppto-visa_credito" inputmode="numeric"></div>
+      <div class="config-row"><div><div class="config-label">Mastercard</div><div class="config-sub" id="cfg-sub-mc"></div></div><input class="config-input" type="number" id="ppto-master_credito" inputmode="numeric"></div>
     </div>
     <div class="card">
       <div style="font-size:11px;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:4px">Fechas de cierre (día del mes)</div>
@@ -246,7 +245,8 @@ function fmtInput(el){
   el.value=result;
 }
 
-function parseInput(val){
+function parseInput(val){if(!val)return 0;// Handle plain number string
+if(!isNaN(val))return parseFloat(val)||0;
   if(!val)return 0;
   // Remover puntos de miles, reemplazar coma decimal por punto
   return parseFloat(val.replace(/\./g,'').replace(',','.')) || 0;
@@ -494,9 +494,9 @@ function renderCuotas(){
 
 function renderConfig(){
   const T=getTarjetas();
-  setInputVal(document.getElementById('ppto-visa_debito'),T.visa_debito.ppto);
-  setInputVal(document.getElementById('ppto-visa_credito'),T.visa_credito.ppto);
-  setInputVal(document.getElementById('ppto-master_credito'),T.master_credito.ppto);
+  document.getElementById("ppto-visa_debito").value=T.visa_debito.ppto;
+  document.getElementById("ppto-visa_credito").value=T.visa_credito.ppto;
+  document.getElementById("ppto-master_credito").value=T.master_credito.ppto;
   document.getElementById('cierre-visa_credito').value=T.visa_credito.cierre||'';
   document.getElementById('cierre-master_credito').value=T.master_credito.cierre||'';
   document.getElementById('cfg-sub-vc').textContent=T.visa_credito.cierre?'Cierre día '+T.visa_credito.cierre:'';
@@ -506,9 +506,9 @@ function renderConfig(){
 
 function guardarConfig(){
   const d=initData();
-  d.config.ppto.visa_debito=parseInput(document.getElementById('ppto-visa_debito').value)||300000;
-  d.config.ppto.visa_credito=parseInput(document.getElementById('ppto-visa_credito').value)||300000;
-  d.config.ppto.master_credito=parseInput(document.getElementById('ppto-master_credito').value)||400000;
+  d.config.ppto.visa_debito=parseFloat(document.getElementById("ppto-visa_debito").value)||300000;
+  d.config.ppto.visa_credito=parseFloat(document.getElementById("ppto-visa_credito").value)||300000;
+  d.config.ppto.master_credito=parseFloat(document.getElementById("ppto-master_credito").value)||400000;
   d.config.cierre.visa_credito=Number(document.getElementById('cierre-visa_credito').value)||30;
   d.config.cierre.master_credito=Number(document.getElementById('cierre-master_credito').value)||30;
   saveData(d);notif('✓ Configuración guardada');renderConfig();
@@ -517,7 +517,7 @@ function guardarConfig(){
 async function agregarGasto(){
   const tarjeta=document.getElementById('g-tarjeta').value;
   const concepto=document.getElementById('g-concepto').value.trim();
-  const montoRaw=parseInput(document.getElementById('g-monto').value);
+  const montoRaw=parseFloat(document.getElementById("g-monto").value)||0;
   const fecha=document.getElementById('g-fecha').value;
   if(!concepto||!montoRaw||!fecha){notif('Completá todos los campos');return;}
   const d=initData();
@@ -535,7 +535,7 @@ async function agregarGasto(){
 async function agregarFijo(){
   const tarjeta=document.getElementById('f-tarjeta').value;
   const concepto=document.getElementById('f-concepto').value.trim();
-  const montoRaw=parseInput(document.getElementById('f-monto').value);
+  const montoRaw=parseFloat(document.getElementById("f-monto").value)||0;
   if(!concepto||!montoRaw){notif('Completá todos los campos');return;}
   const d=initData();
   let montoARS=montoRaw;let monedaOrigen='ARS';
@@ -552,7 +552,7 @@ async function agregarFijo(){
 function agregarCuota(){
   const tarjeta=document.getElementById('c-tarjeta').value;
   const concepto=document.getElementById('c-concepto').value.trim();
-  const monto=parseInput(document.getElementById('c-monto').value);
+  const monto=parseFloat(document.getElementById("c-monto").value)||0;
   const cuotas=Number(document.getElementById('c-cuotas').value);
   const inicio=document.getElementById('c-inicio').value;
   if(!concepto||!monto||!cuotas||!inicio){notif('Completá todos los campos');return;}
@@ -581,6 +581,5 @@ document.getElementById('c-inicio').value=new Date().toISOString().slice(0,7);
 document.getElementById('mes-label').textContent=getMesLabel();
 mostrarCotiz();
 </script>
-
 </body>
 </html>
