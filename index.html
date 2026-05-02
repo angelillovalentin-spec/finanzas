@@ -1,5 +1,5 @@
-DOCTYPE html>
-<html lang="es"
+<!DOCTYPE html>
+<html lang="es">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -167,9 +167,10 @@ input::placeholder{color:var(--text3)}
       <label>Monto total ($)</label>
       <input type="number" id="c-monto" placeholder="0" inputmode="decimal">
       <label>Cantidad de cuotas</label>
-      <input type="number" id="c-cuotas" placeholder="6" min="2" max="48" inputmode="numeric">
-      <label>Mes de inicio</label>
-      <input type="month" id="c-inicio">
+      <input type="number" id="c-cuotas" placeholder="6" min="2" max="48" inputmode="numeric" oninput="previewInicioCuota()">
+      <label>Fecha de compra</label>
+      <input type="date" id="c-fecha" oninput="previewInicioCuota()">
+      <div style="font-size:12px;color:var(--accent);margin-top:8px;font-family:var(--mono);min-height:16px" id="c-preview-inicio"></div>
       <button class="btn" onclick="agregarCuota()">Agregar cuota</button>
     </div>
     <div id="cuotas-list"></div>
@@ -343,8 +344,16 @@ function getPeriodo(tid){
 }
 
 function getCuotasMeses(c){
-  const meses=[];const ini=new Date(c.inicio+'-01');
-  for(let i=0;i<Number(c.cuotas);i++){const m=new Date(ini.getFullYear(),ini.getMonth()+i,1);meses.push(m.toISOString().slice(0,7));}
+  const meses=[];
+  const parts=c.inicio.split('-');
+  const iniY=parseInt(parts[0]);
+  const iniM=parseInt(parts[1])-1; // 0-indexed
+  for(let i=0;i<Number(c.cuotas);i++){
+    const m=new Date(iniY,iniM+i,1);
+    const y=m.getFullYear();
+    const mo=String(m.getMonth()+1).padStart(2,'0');
+    meses.push(y+'-'+mo);
+  }
   return meses;
 }
 
@@ -549,16 +558,46 @@ async function agregarFijo(){
   renderFijos();notif('✓ Fijo agregado');
 }
 
+function calcularInicioCuota(tarjeta, fechaCompra){
+  const T=getTarjetas()[tarjeta];
+  const partes=fechaCompra.split('-');
+  const y=parseInt(partes[0]);
+  const m=parseInt(partes[1])-1; // 0-indexed
+  const d=parseInt(partes[2]);
+  const cierre=T.cierre||30;
+  // Si compra antes o en día de cierre → primera cuota mes siguiente
+  // Si compra después del cierre → primera cuota dos meses después
+  const mesesExtra = d<=cierre ? 1 : 2;
+  const inicioCuota=new Date(y,m+mesesExtra,1);
+  const iy=inicioCuota.getFullYear();
+  const im=String(inicioCuota.getMonth()+1).padStart(2,'0');
+  return iy+'-'+im;
+}
+
+function previewInicioCuota(){
+  const tarjeta=document.getElementById('c-tarjeta').value;
+  const fecha=document.getElementById('c-fecha').value;
+  const cuotas=Number(document.getElementById('c-cuotas').value);
+  const el=document.getElementById('c-preview-inicio');
+  if(!fecha||!cuotas){el.textContent='';return;}
+  const inicio=calcularInicioCuota(tarjeta,fecha);
+  const partes=inicio.split('-');
+  const nombreMes=MESES[parseInt(partes[1])-1]+' '+partes[0];
+  const vc=document.getElementById('c-monto').value?Math.round(parseFloat(document.getElementById('c-monto').value)/cuotas):0;
+  el.textContent='Primera cuota: '+nombreMes+(vc?' · '+fmt(vc)+'/mes':'');
+}
+
 function agregarCuota(){
   const tarjeta=document.getElementById('c-tarjeta').value;
   const concepto=document.getElementById('c-concepto').value.trim();
-  const monto=parseFloat(document.getElementById("c-monto").value)||0;
+  const monto=parseFloat(document.getElementById('c-monto').value)||0;
   const cuotas=Number(document.getElementById('c-cuotas').value);
-  const inicio=document.getElementById('c-inicio').value;
-  if(!concepto||!monto||!cuotas||!inicio){notif('Completá todos los campos');return;}
+  const fecha=document.getElementById('c-fecha').value;
+  if(!concepto||!monto||!cuotas||!fecha){notif('Completá todos los campos');return;}
+  const inicio=calcularInicioCuota(tarjeta,fecha);
   const d=initData();
-  d.cuotas.push({tarjeta,concepto,monto,cuotas,inicio});saveData(d);
-  document.getElementById('c-concepto').value='';document.getElementById('c-monto').value='';document.getElementById('c-cuotas').value='';
+  d.cuotas.push({tarjeta,concepto,monto,cuotas,inicio,fechaCompra:fecha});saveData(d);
+  document.getElementById('c-concepto').value='';document.getElementById('c-monto').value='';document.getElementById('c-cuotas').value='';document.getElementById('c-fecha').value='';document.getElementById('c-preview-inicio').textContent='';
   renderCuotas();notif('✓ Cuota agregada');
 }
 
@@ -577,7 +616,7 @@ function showTab(tab,el){
 }
 
 document.getElementById('g-fecha').value=new Date().toISOString().slice(0,10);
-document.getElementById('c-inicio').value=new Date().toISOString().slice(0,7);
+document.getElementById('c-fecha').value=new Date().toISOString().slice(0,10);
 document.getElementById('mes-label').textContent=getMesLabel();
 mostrarCotiz();
 </script>
